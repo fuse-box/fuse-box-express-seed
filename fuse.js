@@ -1,24 +1,23 @@
-const fsbx = require('fuse-box');
+const { FuseBox, HTMLPlugin, WebIndexPlugin } = require("fuse-box");
 
-const fuseBox = fsbx.FuseBox.init({
-    homeDir: 'src/',
-    sourceMap: {
-        bundleReference: 'app.js.map',
-        outFile: './dist/app.js.map'
-    },
-    outFile: './dist/app.js',
-    plugins: [
-        [
-            fsbx.SassPlugin({outputStyle: 'compressed'}),
-            fsbx.CSSPlugin({})
-        ],
-        fsbx.TypeScriptHelpers(),
-        fsbx.JSONPlugin(),
-        fsbx.HTMLPlugin({useDefault: false})
-    ]
+const fuse = FuseBox.init({
+    homeDir: "src",
+    output: "dist/$name.js"
 });
 
-fuseBox.devServer('>app.ts', {
-    port: 4446,
-    httpServer: false
-});
+fuse.dev({ port: 4445, httpServer: false });
+
+fuse.bundle("server/bundle")
+    .watch("server/**") // watch only server related code.. bugs up atm
+    .instructions(" > [server/index.ts]")
+    // Execute process right after bundling is completed
+    // launch and restart express
+    .completed(proc => proc.start())
+
+
+fuse.bundle("client/app")
+    .watch("client/**") // watch only client related code
+    .hmr()
+    .instructions(" > client/index.ts");
+
+fuse.run();
